@@ -92,54 +92,6 @@ class Cylinder(Mesh):
         self.vertices = np.stack(self.vertices,axis=0).astype(np.float32)
         self.indices = np.stack(self.indices,axis=0).astype(np.uint16)
 
-class Cube(Mesh):
-    def __init__(self,radius):
-        a = 0.5#np.sqrt(3 * (radius**2))
-        
-        #ZPOS
-        pos =  [(-a,a,a),(a,a,a),(-a,-a,a)]
-        pos += [(-a,-a,a),(a,a,a),(a,-a,a)]
-        #ZNEG
-        pos += [(a,a,-a),(-a,a,-a),(-a,-a,-a)]
-        pos += [(a,a,-a),(-a,-a,-a),(a,-a,-a)]
-        #XNEG
-        pos += [(-a,a,-a),(-a,a,a),(-a,-a,-a)]
-        pos += [(-a,-a,-a),(-a,a,a),(-a,-a,a)]
-        #XPOS
-        pos += [(a,a,a),(a,a,-a),(a,-a,-a)]
-        pos += [(a,a,a),(a,-a,-a),(a,-a,a)]
-        #YPOS
-        pos += [(-a,a,a),(-a,a,-a),(a,a,a)]
-        pos += [(a,a,a),(-a,a,-a),(a,a,-a)]
-        #YNEG
-        pos += [(-a,-a,-a),(-a,-a,a),(a,-a,a)]
-        pos += [(-a,-a,-a),(a,-a,a),(a,-a,-a)]
-
-        self.vertices = np.array(pos,dtype='float')
-        inds = []
-        for i in range(0,36,3):
-            inds.append([i,i+1,i+2])
-        self.indices = np.array(inds,dtype='uint16')
-        print(self.indices)
-
-class Cube2(Mesh):
-    def __init__(self,radius):
-        r = radius
-        self.vertices = np.array([
-            [-r ,r ,-r],
-            [-r,-r,-r],
-            [r,-r,-r],
-
-            [r,-r,-r],
-            [r,r,-r],
-            [-r,r,-r]
-        ],dtype='float32')
-
-        inds = []
-        for i in range(0,len(self.vertices),3):
-            inds.append([i,i+1,i+2])
-        self.indices = np.array(inds,dtype='uint16')
-
 class Renderer:
     def __init__(self,meshes,width,height,cubemappath):
         self.meshes = meshes
@@ -175,7 +127,6 @@ class Renderer:
         im = imread(path)[:,:,:3]
         size = 1024
         im = resize(im,(size*3,size*4),preserve_range=True).astype('uint8')
-        print(im.shape,im.dtype)
         
         H,W = im.shape[:2]
         size = H//3
@@ -193,8 +144,6 @@ class Renderer:
         back = back[::-1,::-1]
 
         images = [right,left,top,bottom,back,front]
-        for i in range(6):
-            imwrite(f'face{i}.jpg',images[i])
         
         self.texID = glGenTextures(1)
         glBindTexture(GL_TEXTURE_CUBE_MAP, self.texID)
