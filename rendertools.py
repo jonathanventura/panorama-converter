@@ -126,7 +126,8 @@ class Renderer:
     def loadCubeMap(self,path):
         im = imread(path)[:,:,:3]
         size = 1024
-        im = resize(im,(size*3,size*4),preserve_range=True).astype('uint8')
+        if im.shape[0] != size*3 or im.shape[1]*4 != size:
+            im = resize(im,(size*3,size*4),preserve_range=True).astype('uint8')
         
         H,W = im.shape[:2]
         size = H//3

@@ -2,8 +2,9 @@ import numpy as np
 import os
 import sys
 from imageio import imread, imsave
-import tensorflow as tf
 from tqdm import trange
+from skimage.transform import warp
+import tensorflow as tf
 from tensorflow_addons.image import interpolate_bilinear
 
 class Converter:
@@ -25,19 +26,22 @@ class Converter:
         phi = np.arcsin(Y/np.sqrt(X*X+Y*Y+Z*Z))
 
         # project to spherical panorama image (normalized coordinates)
-        lutx = (0.5*theta/np.pi+0.5)
-        luty = (phi/np.pi+0.5)
+        self.lutx = (0.5*theta/np.pi+0.5)
+        self.luty = (phi/np.pi+0.5)
         
         self.lutx = tf.cast(lutx,'float32')
         self.luty = tf.cast(luty,'float32')
 
-    @tf.function
+    #@tf.function
     def convert(self,im):
         input_height,input_width = im.shape[:2]
         coords = tf.stack([input_width*self.lutx,input_height*self.luty],axis=-1)
         coords_flat = tf.reshape(coords,(1,-1,2))
         pano_flat = interpolate_bilinear(tf.cast(im[None,...],'float32'),coords_flat,indexing='xy')
         pano = tf.reshape(pano_flat[0],(self.output_height,self.output_width) + im.shape[2:])
+        #coords = np.stack([self.luty*input_height,self.lutx*input_width],axis=0)
+        #print(coords.shape)
+        #pano = warp(im,coords,preserve_range=True).astype('uint8')
         return pano
 
 if __name__ == '__main__':
@@ -59,19 +63,19 @@ if __name__ == '__main__':
                             required=True,
                             help='directory for cylindrical output')
     parser.add_argument('--output_width',
-                            required=True,
+                            default=2048,
                             type=int,
                             help='width of output (cylindrical) panorama image')
     parser.add_argument('--output_height',
-                            required=True,
+                            default=1024,
                             type=int,
                             help='height of output (cylindrical) panorama image')
     parser.add_argument('--bottom',
-                            required=True,
+                            default=-1,
                             type=float,
                             help='bottom height value of cylinder')
     parser.add_argument('--top',
-                            required=True,
+                            default=1,
                             type=float,
                             help='top height value of cylinder')
 
@@ -96,9 +100,7 @@ if __name__ == '__main__':
                           output_width=args.output_width)
 
     # unwarp all files
-    for i in trange(len(infiles), desc='Unwarping panorama'):
-        infile = infiles[i]
-
+    for infile in infiles:
         # set the outfile
         filename = os.path.basename(infile)
         outfile = os.path.join(args.output, filename)
@@ -106,7 +108,7 @@ if __name__ == '__main__':
         # run the unwarp
         im = imread(infile)
         res = converter.convert(im)
-        res = res.numpy().astype('uint8')
+        #res = res.numpy().astype('uint8')
 
         # save
         imsave(outfile, res)
