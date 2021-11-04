@@ -67,11 +67,11 @@ if __name__ == '__main__':
                             type=int,
                             help='height of output (cylindrical) panorama image')
     parser.add_argument('--bottom',
-                            required=True,
+                            default=-2.5,
                             type=float,
                             help='bottom height value of cylinder')
     parser.add_argument('--top',
-                            required=True,
+                            default=2.5,
                             type=float,
                             help='top height value of cylinder')
 
@@ -91,12 +91,14 @@ if __name__ == '__main__':
     else:
         # unwarp all png files in the given directory
         infiles = sorted(glob.glob(os.path.join(args.input, '*.png')))
+        infiles += sorted(glob.glob(os.path.join(args.input, '*.jpg')))
+        print(infiles)
     
-    converter = Converter(output_height=args.output_height,
-                          output_width=args.output_width)
-
     # unwarp all files
     for i in trange(len(infiles), desc='Unwarping panorama'):
+        converter = Converter(output_height=args.output_height,
+                              output_width=args.output_width)
+
         infile = infiles[i]
 
         # set the outfile
